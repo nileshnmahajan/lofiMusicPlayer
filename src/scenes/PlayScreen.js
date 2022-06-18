@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import Icon from 'react-native-vector-icons';
 import TrackPlayer, {
   useProgress,
   Capability,
@@ -13,6 +14,8 @@ import {
   SafeAreaView,
   ImageBackground,
   StatusBar,
+  FlatList,
+  ScrollView,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Sound from 'react-native-sound';
@@ -71,15 +74,8 @@ class PlayScreen extends Component {
     StatusBar.setHidden(true);
     // Sound.setCategory('Playback', true); // true = mixWithOthers
     // this.resume();
-    const {
-      filename: song,
-      title,
-      genere,
-      duration_,
-      cover,
-    } = this.props.route.params.item;
-    this.setState({title, song, genere, duration_, cover});
-    this.initPlayer();
+    const {songs, activeSongIndex} = this.props.route.params;
+    this.setState({songs, activeSongIndex}, () => this.initPlayer());
   }
 
   componentWillUnmount() {
@@ -89,51 +85,76 @@ class PlayScreen extends Component {
   }
 
   initPlayer = async () => {
-    await TrackPlayer.setupPlayer();
+    await TrackPlayer.setupPlayer({
+      // minBuffer: 3,
+    });
     TrackPlayer.addEventListener(Event.RemotePause, () => this.pause());
     TrackPlayer.addEventListener(Event.RemotePlay, () => this.resume());
 
-    // TrackPlayer.updateOptions({
-    //   waitForBuffer: true,
-    //   stopWithApp: true,
-    //   // Media controls capabilities
-    //   capabilities: [
-    //     Capability.Play,
-    //     Capability.Pause,
-    //     Capability.SkipToNext,
-    //     Capability.SkipToPrevious,
-    //   ],
-    //   likeOptions: [],
+    TrackPlayer.updateOptions({
+      waitForBuffer: true,
+      minBuffer: 5,
+      stopWithApp: true,
+      // Media controls capabilities
+      capabilities: [
+        Capability.Play,
+        Capability.Pause,
+        Capability.SkipToNext,
+        Capability.SkipToPrevious,
+        // Capability.SeekTo,
+      ],
+      likeOptions: [],
 
-    //   // Capabilities that will show up when the notification is in the compact form on Android
-    //   compactCapabilities: [
-    //     Capability.Play,
-    //     Capability.Pause,
-    //     Capability.SkipToNext,
-    //   ],
+      // Capabilities that will show up when the notification is in the compact form on Android
+      compactCapabilities: [
+        Capability.Play,
+        Capability.Pause,
+        Capability.SkipToNext,
+      ],
 
-    //   // Icons for the notification on Android (if you don't like the default ones)
-    //   // playIcon: require('./play-icon.png'),
-    //   // pauseIcon: require('./pause-icon.png'),
-    //   // stopIcon: require('./stop-icon.png'),
-    //   // previousIcon: require('./previous-icon.png'),
-    //   // nextIcon: require('./next-icon.png'),
-    //   // icon: require('./notification-icon.png'),
-    // });
+      // Icons for the notification on Android (if you don't like the default ones)
+      // playIcon: require('./play-icon.png'),
+      // pauseIcon: require('./pause-icon.png'),
+      // stopIcon: require('./stop-icon.png'),
+      // previousIcon: require('./previous-icon.png'),
+      // nextIcon: require('./next-icon.png'),
+      // icon: require('./notification-icon.png'),
+    });
 
-    const {title, song, genere, duration_, cover} = this.state;
-
+    this.playSong();
+  };
+  playSong = async () => {
+    const {
+      filename: song,
+      title,
+      genere,
+      duration_,
+      cover,
+    } = this.state.songs[this.state.activeSongIndex];
+    TrackPlayer.reset();
     await TrackPlayer.add({
       id: 'trackId',
-      url: API.play(song),
+      url: API.play(song), //need to update this url before playing as it may have expired while time of playing from s3
       title: title,
       artist: genere,
       artwork: API.cover(cover),
       duration: duration_,
     });
-
-    // Start playing it
+    this.setState({title, song, genere, duration_, cover});
     this.resume();
+  };
+
+  nextSong = () => {
+    if (this.state.activeSongIndex + 1 < this.state.songs.length)
+      this.setState({activeSongIndex: this.state.activeSongIndex + 1}, () =>
+        this.playSong(),
+      );
+  };
+  prevSong = () => {
+    if (this.state.activeSongIndex > 0)
+      this.setState({activeSongIndex: this.state.activeSongIndex - 1}, () =>
+        this.playSong(),
+      );
   };
 
   subscribe = NetInfo.addEventListener(
@@ -191,6 +212,50 @@ class PlayScreen extends Component {
     }
     // //this.songsetCurrentTime(parseInt(data));
   };
+
+  renderSong = (item, index) => {
+    const {filename, title, cover, duration_, genere} = item;
+
+    return (
+      <TouchableOpacity
+        style={{
+          marginVertical: 5,
+          marginHorizontal: 10,
+          borderRadius: 5,
+          padding: 10,
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}
+        onPress={() =>
+          this.setState({activeSongIndex: index}, () => {
+            SheetManager.hide('playListBottomSheet');
+            this.playSong();
+          })
+        }>
+        <Image
+          source={{uri: API.cover(cover)}}
+          style={{width: 30, height: 30, borderRadius: 5}}
+        />
+        <View
+          style={{
+            padding: 10,
+            flex: 1,
+          }}>
+          <Text color="white" h4 bold marq speed={0.2} marqueeOnStart loop>
+            {title}
+          </Text>
+          <Text color="white">
+            {' '}
+            {moment.utc(duration_ * 1000).format('mm:ss')}
+          </Text>
+        </View>
+        <Image
+          source={assets.love}
+          style={{width: 15, height: 15, tintColor: 'white'}}
+        />
+      </TouchableOpacity>
+    );
+  };
   render() {
     const {title, song, genere, duration_, cover} = this.state;
     const {playing, activeTime, totalTime, progress} = this.state;
@@ -244,13 +309,13 @@ class PlayScreen extends Component {
                 borderRadius: 25,
                 padding: 6,
               }}
-              onPress={() => SheetManager.show('helloworld_sheet')}>
+              onPress={() => SheetManager.show('playListBottomSheet')}>
               <Image
-                source={assets.more}
+                source={assets.list}
                 style={{
                   width: 25,
                   height: 25,
-                  resizeMode: 'center',
+                  resizeMode: 'cover',
                   tintColor: 'white',
                 }}
               />
@@ -273,7 +338,15 @@ class PlayScreen extends Component {
           <View style={{padding: 15, backgroundColor: 'rgba(0,0,0,0.1)'}}>
             {/* song name and singer */}
             <View>
-              <Text numberOfLines={1} h4 color="white" bold center>
+              <Text
+                marq
+                speed={0.2}
+                marqueeOnStart
+                loop
+                h4
+                color="white"
+                bold
+                center>
                 {title}
               </Text>
               <Text numberOfLines={1} color="gray" bold center>
@@ -290,7 +363,7 @@ class PlayScreen extends Component {
                 {moment.utc(activeTime * 1000).format('mm:ss')}
               </Text>
 
-              <Text color="white"> 
+              <Text color="white">
                 {moment.utc(duration_ * 1000).format('mm:ss')}
               </Text>
             </View>
@@ -327,7 +400,7 @@ class PlayScreen extends Component {
               </TouchableOpacity>
 
               {/* previous */}
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => this.prevSong()}>
                 <Image
                   source={assets.previous}
                   style={{
@@ -358,7 +431,10 @@ class PlayScreen extends Component {
               </TouchableOpacity>
 
               {/* next */}
-              <TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  this.nextSong();
+                }}>
                 <Image
                   source={assets.next}
                   style={{
@@ -383,13 +459,31 @@ class PlayScreen extends Component {
               </TouchableOpacity>
             </View>
           </View>
-          <ActionSheet id="helloworld_sheet">
-            <View
-              style={{
-                width,
-                height: height * 0.7,
-                backgroundColor: 'black',
-              }}></View>
+
+          <ActionSheet
+            onBeforeShow={data => console.log(data)}
+            ref={'actionSheetRef'}
+            bounceOnOpen={false}
+            gestureEnabled={true}
+            id="playListBottomSheet"
+            closeOnTouchBackdrop={false}
+            // indicatorStyle={{backgroundColor: 'white'}}
+            containerStyle={{
+              backgroundColor: 'rgba(0,0,0,0.80)',
+              borderTopLeftRadius: 40,
+              borderTopRightRadius: 40,
+              borderColor: 'white',
+            }}>
+            <ScrollView
+              nestedScrollEnabled={true}
+              style={{maxHeight: height * 0.7}}>
+              <FlatList
+                data={this.props.route.params.songs}
+                renderItem={({item, index}) => {
+                  return this.renderSong(item, index);
+                }}
+              />
+            </ScrollView>
           </ActionSheet>
         </ImageBackground>
       </SafeAreaView>

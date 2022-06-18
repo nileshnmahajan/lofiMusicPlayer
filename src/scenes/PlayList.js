@@ -15,6 +15,7 @@ import Sound from 'react-native-sound';
 import SplashScreen from './SplashScreen';
 import MusicControl, {Command} from 'react-native-music-control';
 import NetInfo from '@react-native-community/netinfo';
+
 import moment from 'moment';
 import {
   height,
@@ -98,6 +99,7 @@ class PlayList extends Component {
           this.props.navigation.navigate('playScreen', {
             item,
             songs: this.state.songs,
+            activeSongIndex: index,
           })
         }>
         <Image
@@ -109,7 +111,7 @@ class PlayList extends Component {
             padding: 10,
             flex: 1,
           }}>
-          <Text color="white" bold>
+          <Text color="white" h4 bold marq speed={0.2} marqueeOnStart loop>
             {title}
           </Text>
           <Text color="white">

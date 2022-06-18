@@ -1,5 +1,6 @@
 export default {
   home: require('./icons/home.png'),
+  list: require('./icons/list.png'),
   tick1: require('./icons/check-mark.png'),
   plus: require('./icons/plus.png'),
   newList: require('./icons/add-list.png'),
