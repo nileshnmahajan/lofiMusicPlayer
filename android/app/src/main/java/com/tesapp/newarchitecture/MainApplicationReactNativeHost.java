@@ -1,4 +1,4 @@
-package com.tesapp.newarchitecture;
+package in.pressbuddy.lofiPlayer.newarchitecture;
 
 import android.app.Application;
 import androidx.annotation.NonNull;
@@ -19,9 +19,9 @@ import com.facebook.react.fabric.CoreComponentsRegistry;
 import com.facebook.react.fabric.EmptyReactNativeConfig;
 import com.facebook.react.fabric.FabricJSIModuleProvider;
 import com.facebook.react.uimanager.ViewManagerRegistry;
-import com.tesapp.BuildConfig;
-import com.tesapp.newarchitecture.components.MainComponentsRegistry;
-import com.tesapp.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
+import in.pressbuddy.lofiPlayer.BuildConfig;
+import in.pressbuddy.lofiPlayer.newarchitecture.components.MainComponentsRegistry;
+import in.pressbuddy.lofiPlayer.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.tesapp.newarchitecture.modules;
+package in.pressbuddy.lofiPlayer.newarchitecture.modules;
 
 import com.facebook.jni.HybridData;
 import com.facebook.react.ReactPackage;

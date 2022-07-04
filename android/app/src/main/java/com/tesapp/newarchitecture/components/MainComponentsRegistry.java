@@ -1,4 +1,4 @@
-package com.tesapp.newarchitecture.components;
+package in.pressbuddy.lofiPlayer.newarchitecture.components;
 
 import com.facebook.jni.HybridData;
 import com.facebook.proguard.annotations.DoNotStrip;

@@ -1,4 +1,4 @@
-package com.tesapp;
+package in.pressbuddy.lofiPlayer;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
