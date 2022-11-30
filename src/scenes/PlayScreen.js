@@ -67,6 +67,7 @@ class PlayScreen extends Component {
     };
     this.timer = null;
     //jsonLog({timeOut, duration});
+    this.list = React.createRef();
   }
   componentDidMount() {
     // MusicControl.enableBackgroundMode(true);
@@ -80,8 +81,6 @@ class PlayScreen extends Component {
 
   componentWillUnmount() {
     this.stop();
-    //this.songrelease();
-    // this.bg.release();
   }
 
   initPlayer = async () => {
@@ -146,14 +145,16 @@ class PlayScreen extends Component {
 
   nextSong = () => {
     if (this.state.activeSongIndex + 1 < this.state.songs.length)
-      this.setState({activeSongIndex: this.state.activeSongIndex + 1}, () =>
-        this.playSong(),
+      this.setState(
+        {activeSongIndex: this.state.activeSongIndex + 1, activeTime: 0},
+        () => this.playSong(),
       );
   };
   prevSong = () => {
     if (this.state.activeSongIndex > 0)
-      this.setState({activeSongIndex: this.state.activeSongIndex - 1}, () =>
-        this.playSong(),
+      this.setState(
+        {activeSongIndex: this.state.activeSongIndex - 1, activeTime: 0},
+        () => this.playSong(),
       );
   };
 
@@ -191,7 +192,7 @@ class PlayScreen extends Component {
     await TrackPlayer.play();
     clearInterval(this.timer);
     this.timer = setInterval(async () => {
-      if (this.state.activeTime == this.state.totalTime) return this.stop();
+      if (this.state.activeTime == this.state.totalTime) return this.nextSong();
       const d = await TrackPlayer.getPosition();
       this.setState({
         activeTime: d,
@@ -215,19 +216,22 @@ class PlayScreen extends Component {
 
   renderSong = (item, index) => {
     const {filename, title, cover, duration_, genere} = item;
-
+    const {activeSongIndex} = this.state;
     return (
       <TouchableOpacity
-        style={{
-          marginVertical: 5,
-          marginHorizontal: 10,
-          borderRadius: 5,
-          padding: 10,
-          flexDirection: 'row',
-          alignItems: 'center',
-        }}
+        style={[
+          {
+            marginVertical: 5,
+            marginHorizontal: 10,
+            borderRadius: 5,
+            padding: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+          },
+          activeSongIndex == index && {backgroundColor: '#323232'},
+        ]}
         onPress={() =>
-          this.setState({activeSongIndex: index}, () => {
+          this.setState({activeSongIndex: index, activeTime: 0}, () => {
             SheetManager.hide('playListBottomSheet');
             this.playSong();
           })
@@ -309,7 +313,9 @@ class PlayScreen extends Component {
                 borderRadius: 25,
                 padding: 6,
               }}
-              onPress={() => SheetManager.show('playListBottomSheet')}>
+              onPress={() => {
+                SheetManager.show('playListBottomSheet');
+              }}>
               <Image
                 source={assets.list}
                 style={{
@@ -461,7 +467,7 @@ class PlayScreen extends Component {
           </View>
 
           <ActionSheet
-            onBeforeShow={data => console.log(data)}
+            onBeforeShow={() => {}}
             ref={'actionSheetRef'}
             bounceOnOpen={false}
             gestureEnabled={true}
@@ -481,6 +487,15 @@ class PlayScreen extends Component {
                 data={this.props.route.params.songs}
                 renderItem={({item, index}) => {
                   return this.renderSong(item, index);
+                }}
+                onScrollToIndexFailed={info => {
+                  // const wait = new Promise(resolve => setTimeout(resolve, 500));
+                  // wait.then(() => {
+                  //   flatList.current?.scrollToIndex({
+                  //     index: info.index,
+                  //     animated: true,
+                  //   });
+                  // });
                 }}
               />
             </ScrollView>

@@ -94,6 +94,7 @@ class PlayList extends Component {
           padding: 10,
           flexDirection: 'row',
           alignItems: 'center',
+          backgroundColor: '#323232',
         }}
         onPress={() =>
           this.props.navigation.navigate('playScreen', {
@@ -119,10 +120,10 @@ class PlayList extends Component {
             {moment.utc(duration_ * 1000).format('mm:ss')}
           </Text>
         </View>
-        <Image
+        {/* <Image
           source={assets.love}
           style={{width: 15, height: 15, tintColor: 'white'}}
-        />
+        /> */}
       </TouchableOpacity>
     );
   };
